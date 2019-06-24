@@ -7,7 +7,6 @@ import frappe
 from frappe.utils import getdate, nowdate
 from frappe import _
 from frappe.model.document import Document
-from erpnext.hr.utils import set_employee_name
 from frappe.utils import cstr
 
 class Attendance(Document):
@@ -17,8 +16,6 @@ class Attendance(Document):
 			(self.employee, self.attendance_date, self.name))
 		if res:
 			frappe.throw(_("Attendance for employee {0} is already marked").format(self.employee))
-
-		set_employee_name(self)
 
 	def check_leave_record(self):
 		leave_record = frappe.db.sql("""select leave_type, half_day, half_day_date from `tabLeave Application`
@@ -40,7 +37,8 @@ class Attendance(Document):
 	def validate_attendance_date(self):
 		date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
 
-		if getdate(self.attendance_date) > getdate(nowdate()):
+		# leaves can be marked for future dates
+		if self.status not in ('On Leave', 'Half Day') and getdate(self.attendance_date) > getdate(nowdate()):
 			frappe.throw(_("Attendance can not be marked for future dates"))
 		elif date_of_joining and getdate(self.attendance_date) < getdate(date_of_joining):
 			frappe.throw(_("Attendance date can not be less than employee's joining date"))

@@ -82,6 +82,19 @@ def install(country=None):
 		{'doctype': 'Employment Type', 'employee_type_name': _('Intern')},
 		{'doctype': 'Employment Type', 'employee_type_name': _('Apprentice')},
 
+
+		# Stock Entry Type
+		{'doctype': 'Stock Entry Type', 'name': 'Material Issue', 'purpose': 'Material Issue'},
+		{'doctype': 'Stock Entry Type', 'name': 'Material Receipt', 'purpose': 'Material Receipt'},
+		{'doctype': 'Stock Entry Type', 'name': 'Material Transfer', 'purpose': 'Material Transfer'},
+		{'doctype': 'Stock Entry Type', 'name': 'Manufacture', 'purpose': 'Manufacture'},
+		{'doctype': 'Stock Entry Type', 'name': 'Repack', 'purpose': 'Repack'},
+		{'doctype': 'Stock Entry Type', 'name': 'Send to Subcontractor', 'purpose': 'Send to Subcontractor'},
+		{'doctype': 'Stock Entry Type', 'name': 'Material Transfer for Manufacture', 'purpose': 'Material Transfer for Manufacture'},
+		{'doctype': 'Stock Entry Type', 'name': 'Material Consumption for Manufacture', 'purpose': 'Material Consumption for Manufacture'},
+		{'doctype': 'Stock Entry Type', 'name': 'Send to Warehouse', 'purpose': 'Send to Warehouse'},
+		{'doctype': 'Stock Entry Type', 'name': 'Receive at Warehouse', 'purpose': 'Receive at Warehouse'},
+
 		# Designation
 		{'doctype': 'Designation', 'designation_name': _('CEO')},
 		{'doctype': 'Designation', 'designation_name': _('Manager')},
@@ -252,7 +265,7 @@ def install(country=None):
 	from erpnext.buying.doctype.supplier_scorecard.supplier_scorecard import make_default_records
 	make_default_records()
 
-	make_records(records, True)
+	make_records(records)
 
 	set_more_defaults()
 
@@ -263,10 +276,13 @@ def install(country=None):
 
 def set_more_defaults():
 	# Do more setup stuff that can be done here with no dependencies
-
-	# set default customer group and territory
 	selling_settings = frappe.get_doc("Selling Settings")
 	selling_settings.set_default_customer_group_and_territory()
+	selling_settings.cust_master_name = "Customer Name"
+	selling_settings.so_required = "No"
+	selling_settings.dn_required = "No"
+	selling_settings.allow_multiple_items = 1
+	selling_settings.sales_update_frequency = "Each Transaction"
 	selling_settings.save()
 
 	add_uom_data()
@@ -275,14 +291,6 @@ def set_more_defaults():
 	doc = frappe.get_doc('Item Variant Settings')
 	doc.set_default_fields()
 	doc.save()
-
-	selling_settings = frappe.get_doc("Selling Settings")
-	selling_settings.cust_master_name = "Customer Name"
-	selling_settings.so_required = "No"
-	selling_settings.dn_required = "No"
-	selling_settings.allow_multiple_items = 1
-	selling_settings.sales_update_frequency = "Each Transaction"
-	selling_settings.save()
 
 	buying_settings = frappe.get_doc("Buying Settings")
 	buying_settings.supp_master_name = "Supplier Name"
@@ -355,7 +363,12 @@ def add_sale_stages():
 def install_company(args):
 	records = [
 		# Fiscal Year
-		{ "doctype": "Fiscal Year", 'year': get_fy_details(args.fy_start_date, args.fy_end_date), 'year_start_date': args.fy_start_date, 'year_end_date': args.fy_end_date },
+		{
+			'doctype': "Fiscal Year",
+			'year': get_fy_details(args.fy_start_date, args.fy_end_date),
+			'year_start_date': args.fy_start_date,
+			'year_end_date': args.fy_end_date
+		},
 
 		# Company
 		{
@@ -371,7 +384,7 @@ def install_company(args):
 		}
 	]
 
-	make_records(records, True)
+	make_records(records)
 
 
 def install_post_company_fixtures(args=None):
@@ -479,7 +492,7 @@ def install_defaults(args=None):
 		},
 	]
 
-	make_records(records, True)
+	make_records(records)
 
 
 def get_fy_details(fy_start_date, fy_end_date):

@@ -28,17 +28,25 @@ frappe.ui.form.on('POS Profile', {
 			return {
 				filters: [
 					['Print Format', 'doc_type', '=', 'Sales Invoice'],
-					['Print Format', 'print_format_type', '=', 'Server'],
+					['Print Format', 'print_format_type', '=', 'Jinja'],
 				]
 			};
 		});
 
-		frm.set_query("print_format", function() {
-			return { filters: { doc_type: "Sales Invoice", print_format_type: "Js"} };
+		frm.set_query("account_for_change_amount", function() {
+			return {
+				filters: {
+					account_type: ['in', ["Cash", "Bank"]]
+				}
+			};
 		});
 
-		frappe.db.get_value('POS Settings', {name: 'POS Settings'}, 'use_pos_in_offline_mode', (r) => {
-			is_offline = r && cint(r.use_pos_in_offline_mode)
+		frm.set_query("print_format", function() {
+			return { filters: { doc_type: "Sales Invoice", print_format_type: "JS"} };
+		});
+
+		frappe.db.get_value('POS Settings', 'POS Settings', 'use_pos_in_offline_mode', (r) => {
+			const is_offline = r && cint(r.use_pos_in_offline_mode)
 			frm.toggle_display('offline_pos_section', is_offline);
 			frm.toggle_display('print_format_for_online', !is_offline);
 		});

@@ -54,8 +54,10 @@ def _execute(filters=None, additional_table_columns=None, additional_query_colum
 			delivery_note, d.income_account, d.cost_center, d.stock_qty, d.stock_uom
 		]
 
-		row += [(d.base_net_rate * d.qty)/d.stock_qty, d.base_net_amount] \
-			if d.stock_uom != d.uom and d.stock_qty != 0 else [d.base_net_rate, d.base_net_amount]
+		if d.stock_uom != d.uom and d.stock_qty:
+			row += [(d.base_net_rate * d.qty)/d.stock_qty, d.base_net_amount]
+		else:
+			row += [d.base_net_rate, d.base_net_amount]
 
 		total_tax = 0
 		for tax in tax_columns:
@@ -100,7 +102,9 @@ def get_conditions(filters):
 		("customer", " and `tabSales Invoice`.customer = %(customer)s"),
 		("item_code", " and `tabSales Invoice Item`.item_code = %(item_code)s"),
 		("from_date", " and `tabSales Invoice`.posting_date>=%(from_date)s"),
-		("to_date", " and `tabSales Invoice`.posting_date<=%(to_date)s")):
+		("to_date", " and `tabSales Invoice`.posting_date<=%(to_date)s"),
+		("company_gstin", " and `tabSales Invoice`.company_gstin = %(company_gstin)s"),
+		("invoice_type", " and `tabSales Invoice`.invoice_type = %(invoice_type)s")):
 			if filters.get(opts[0]):
 				conditions += opts[1]
 
@@ -108,13 +112,13 @@ def get_conditions(filters):
 		conditions += """ and exists(select name from `tabSales Invoice Payment`
 			where parent=`tabSales Invoice`.name
 				and ifnull(`tabSales Invoice Payment`.mode_of_payment, '') = %(mode_of_payment)s)"""
-	
+
 	if filters.get("warehouse"):
 		conditions +=  """ and exists(select name from `tabSales Invoice Item`
 			 where parent=`tabSales Invoice`.name
 			 	and ifnull(`tabSales Invoice Item`.warehouse, '') = %(warehouse)s)"""
 
-	
+
 	if filters.get("brand"):
 		conditions +=  """ and exists(select name from `tabSales Invoice Item`
 			 where parent=`tabSales Invoice`.name
@@ -131,10 +135,10 @@ def get_conditions(filters):
 def get_items(filters, additional_query_columns):
 	conditions = get_conditions(filters)
 	match_conditions = frappe.build_match_conditions("Sales Invoice")
-	
+
 	if match_conditions:
 		match_conditions = " and {0} ".format(match_conditions)
-	
+
 	if additional_query_columns:
 		additional_query_columns = ', ' + ', '.join(additional_query_columns)
 
