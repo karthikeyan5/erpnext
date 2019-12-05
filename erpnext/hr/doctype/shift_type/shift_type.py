@@ -29,7 +29,11 @@ class ShiftType(Document):
 		for key, group in itertools.groupby(logs, key=lambda x: (x['employee'], x['shift_actual_start'])):
 			single_shift_logs = list(group)
 			attendance_status, working_hours, late_entry, early_exit = self.get_attendance(single_shift_logs)
-			mark_attendance_and_link_log(single_shift_logs, attendance_status, key[1].date(), working_hours, late_entry, early_exit, self.name)
+			if cint(self.mark_absent_as_lwp) and attendance_status == 'Absent':
+				create_lwp(employee, date)
+				# todo: link marked attendance with the log
+			else:
+				mark_attendance_and_link_log(single_shift_logs, attendance_status, key[1].date(), working_hours, late_entry, early_exit, self.name)
 		for employee in self.get_assigned_employee(self.process_attendance_after, True):
 			self.mark_absent_for_dates_with_no_attendance(employee)
 
@@ -75,7 +79,10 @@ class ShiftType(Document):
 		for date in dates:
 			shift_details = get_employee_shift(employee, date, True)
 			if shift_details and shift_details.shift_type.name == self.name:
-				mark_absent(employee, date, self.name)
+				if cint(self.mark_absent_as_lwp):
+					create_lwp(employee, date)
+				else:
+					mark_absent(employee, date, self.name)
 
 	def get_assigned_employee(self, from_date=None, consider_default_shift=False):
 		filters = {'date':('>=', from_date), 'shift_type': self.name, 'docstatus': '1'}
@@ -123,3 +130,19 @@ def get_filtered_date_list(employee, start_date, end_date, filter_attendance=Tru
 		{"employee":employee, "start_date":start_date, "end_date":end_date, "holiday_list":holiday_list}, as_list=True)
 
 	return [getdate(date[0]) for date in dates]
+
+def create_lwp(employee, date):
+	employee_doc = frappe.get_doc('Employee', employee)
+	doc_dict = {
+				'doctype': 'Leave Application',
+				'employee': employee,
+				'company': employee_doc.company,
+				"from_date": date,
+				"to_date": date,
+				"description": "Created by Auto Attendance for Absent",
+				"leave_type": "Leave Without Pay",
+  				"posting_date": date,
+				"status": "Approved"
+			}
+	leave_application_doc = frappe.get_doc(doc_dict).insert()
+	leave_application_doc.submit()

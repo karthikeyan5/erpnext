@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "autoname": "prompt",
  "creation": "2018-04-13 16:22:52.954783",
  "doctype": "DocType",
@@ -18,6 +19,7 @@
   "column_break_10",
   "working_hours_threshold_for_half_day",
   "working_hours_threshold_for_absent",
+  "mark_absent_as_lwp",
   "process_attendance_after",
   "last_sync_of_checkin",
   "grace_period_settings_auto_attendance_section",
@@ -156,9 +158,16 @@
    "fieldname": "last_sync_of_checkin",
    "fieldtype": "Datetime",
    "label": "Last Sync of Checkin"
+  },
+  {
+   "default": "0",
+   "fieldname": "mark_absent_as_lwp",
+   "fieldtype": "Check",
+   "label": "Mark Absent as LWP"
   }
  ],
- "modified": "2019-07-30 01:05:24.660666",
+ "links": [],
+ "modified": "2019-12-05 11:50:16.283749",
  "modified_by": "Administrator",
  "module": "HR",
  "name": "Shift Type",
